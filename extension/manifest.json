@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "ChatGPT Bulk Delete Secure",
+  "version": "1.0",
+  "description": "Securely delete multiple ChatGPT conversations at once. Select what to remove using checkboxes — fast, private, and easy.",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://chatgpt.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "48": "chatgpt_bulk_delete_secure_icon_48x48.png",
+      "128": "chatgpt_bulk_delete_secure_icon_128x128.png"
+    }
+  },
+  "icons": {
+    "48": "chatgpt_bulk_delete_secure_icon_48x48.png",
+    "128": "chatgpt_bulk_delete_secure_icon_128x128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://chatgpt.com/*"],
+      "js": ["content.js"]
+    }
+  ]
+} 

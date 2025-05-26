@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extension Screenshot</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #f8fafc;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .screenshot-container {
+            width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .browser-header {
+            background: #f1f5f9;
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+        }
+        .browser-dots {
+            display: flex;
+            gap: 8px;
+        }
+        .browser-dots span {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .browser-dots span:nth-child(1) { background: #ef4444; }
+        .browser-dots span:nth-child(2) { background: #f59e0b; }
+        .browser-dots span:nth-child(3) { background: #10b981; }
+        .extension-popup {
+            padding: 20px;
+        }
+        .extension-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .extension-icon {
+            width: 32px;
+            height: 32px;
+            background: #2563eb;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        .extension-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .delete-button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+        .delete-button:hover {
+            background: #1e40af;
+        }
+        .stats {
+            background: #f3f4f6;
+            padding: 16px;
+            border-radius: 6px;
+            margin-top: 16px;
+        }
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            color: #4b5563;
+        }
+        .stat-item:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="screenshot-container">
+        <div class="browser-header">
+            <div class="browser-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        <div class="extension-popup">
+            <div class="extension-header">
+                <div class="extension-icon">CD</div>
+                <div class="extension-title">ChatGPT Bulk Delete</div>
+            </div>
+            <button class="delete-button">Delete All Conversations</button>
+            <div class="stats">
+                <div class="stat-item">
+                    <span>Total Conversations:</span>
+                    <span>42</span>
+                </div>
+                <div class="stat-item">
+                    <span>Last Deletion:</span>
+                    <span>2 days ago</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 
