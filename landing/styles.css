@@ -41,10 +41,27 @@ nav {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+.logo-container {
+    display: flex;
+    align-items: center;
+    text-decoration: none !important;
+    color: inherit;
+    gap: 10px;
+}
+
+.logo-icon {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    text-decoration: none;
+    display: block;
+}
+
 .logo {
-    font-weight: 700;
-    font-size: 1.25rem;
+    font-size: 1.2rem;
+    font-weight: bold;
     color: var(--primary-color);
+    text-decoration: none;
 }
 
 .nav-links a {
