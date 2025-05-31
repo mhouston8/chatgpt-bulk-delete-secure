@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing - ChatGPT Bulk Delete</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pricing-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 8rem 2rem 4rem;
+            background: linear-gradient(to bottom, #f8fafc, #ffffff);
+            flex: 1;
+        }
+
+        .pricing-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .pricing-header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+            color: var(--text-color);
+        }
+
+        .pricing-header p {
+            font-size: 1.25rem;
+            color: var(--light-text);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .pricing-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 2.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .pricing-card.popular {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 2px solid var(--primary-color);
+        }
+
+        .pricing-card.popular::before {
+            content: "Most Popular";
+            position: absolute;
+            top: 1rem;
+            right: -2rem;
+            background: var(--primary-color);
+            color: white;
+            padding: 0.5rem 3rem;
+            transform: rotate(45deg);
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .pricing-card h2 {
+            font-size: 1.75rem;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .price {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+        }
+
+        .price span {
+            font-size: 1.1rem;
+            color: var(--light-text);
+            font-weight: 500;
+        }
+
+        .features {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 2.5rem 0;
+        }
+
+        .features li {
+            padding: 0.75rem 0;
+            color: var(--light-text);
+            display: flex;
+            align-items: center;
+            font-size: 1.05rem;
+        }
+
+        .features li::before {
+            content: "✓";
+            color: var(--primary-color);
+            margin-right: 0.75rem;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .cta-button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 1.25rem 2rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            width: 100%;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+
+        .cta-button:hover {
+            background: var(--secondary-color);
+            color: white;
+            text-decoration: none;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+
+        .pricing-card.free .cta-button {
+            background: var(--light-text);
+        }
+
+        .pricing-card.free .cta-button:hover {
+            background: var(--text-color);
+            box-shadow: 0 4px 12px rgba(107, 114, 128, 0.2);
+        }
+
+        .pricing-card.free {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        }
+
+        @media (max-width: 768px) {
+            .pricing-grid {
+                grid-template-columns: 1fr;
+                padding: 0 1rem;
+            }
+            
+            .pricing-header h1 {
+                font-size: 2rem;
+            }
+            
+            .pricing-header p {
+                font-size: 1.1rem;
+            }
+
+            .pricing-card {
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/" class="logo-container">
+            <img src="images/chatgpt_bulk_delete_secure_icon_48x48.png" alt="Logo" class="logo-icon">
+            <div class="logo">ChatGPT Bulk Delete Secure</div>
+        </a>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="#features">Features</a>
+            <a href="#how-it-works">How It Works</a>
+            <a href="#faq">FAQ</a>
+        </div>
+    </nav>
+
+    <div class="pricing-container">
+        <div class="pricing-header">
+            <h1>Simple, Transparent Pricing</h1>
+            <p>Choose the plan that best fits your needs. All plans include our core features with different usage limits.</p>
+        </div>
+
+        <div class="pricing-grid">
+            <div class="pricing-card free">
+                <h2>Free</h2>
+                <div class="price">$0 <span>/forever</span></div>
+                <ul class="features">
+                    <li>Unlimited conversation deletion</li>
+                    <li>Basic export functionality</li>
+                </ul>
+                <a href="#" class="cta-button">Get Started</a>
+            </div>
+
+            <div class="pricing-card popular">
+                <h2>Pro</h2>
+                <div class="price">$4.99 <span>/month</span></div>
+                <ul class="features">
+                    <li>Unlimited conversation deletion</li>
+                    <li>Advanced export options</li>
+                    <li>Priority support</li>
+                    <li>Bulk selection tools</li>
+                    <li>Custom export formats</li>
+                    <li>Auto-backup before deletion</li>
+                </ul>
+                <a href="#" class="cta-button">Subscribe Now</a>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="privacy-policy.html">Privacy Policy</a>
+                <a href="contact.html">Contact</a>
+            </div>
+            <p class="copyright">© 2025 ChatGPT Bulk Delete Secure. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html> 
