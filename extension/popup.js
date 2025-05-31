@@ -129,6 +129,7 @@ function addCheckboxesToConversations() {
                 
                 // Check if checkbox already exists
                 if (conversation.querySelector('.conversation-checkbox')) {
+                    console.log('Checkbox already exists for this conversation');
                     return;
                 }
 
@@ -144,16 +145,19 @@ function addCheckboxesToConversations() {
                 checkbox.style.transform = 'translateY(-50%)';
                 checkbox.style.zIndex = '1';
                 
+                // Add debug logging for checkbox state changes
+                checkbox.addEventListener('change', (e) => {
+                    e.stopPropagation();
+                    console.log('Checkbox state changed:', checkbox.checked);
+                    const anyChecked = document.querySelector('.conversation-checkbox:checked') !== null;
+                    console.log('Any checkboxes checked:', anyChecked);
+                    localStorage.setItem('hasCheckedBoxes', anyChecked);
+                });
+
                 // Prevent link navigation when clicking the checkbox
                 checkbox.addEventListener('click', (e) => {
                     e.stopPropagation();
-                });
-
-                // Handle checkbox change
-                checkbox.addEventListener('change', (e) => {
-                    e.stopPropagation();
-                    const anyChecked = document.querySelector('.conversation-checkbox:checked') !== null;
-                    localStorage.setItem('hasCheckedBoxes', anyChecked);
+                    console.log('Checkbox clicked, new state:', checkbox.checked);
                 });
 
                 // Prevent link navigation when clicking the checkbox container
@@ -167,6 +171,7 @@ function addCheckboxesToConversations() {
                 checkboxContainer.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    console.log('Checkbox container clicked');
                     checkbox.click();
                 });
                 
@@ -176,7 +181,7 @@ function addCheckboxesToConversations() {
                 conversation.insertBefore(checkbox, conversation.firstChild);
                 conversation.insertBefore(checkboxContainer, conversation.firstChild);
                 
-                console.log('Checkbox added successfully');
+                console.log('Checkbox added successfully to conversation');
             }
 
             // Add checkboxes to existing conversations
@@ -232,9 +237,35 @@ function deleteSelectedConversations() {
     return new Promise((resolve, reject) => {
         try {
             const deleteSelected = async () => {
+                // Add a small delay to ensure checkbox states are updated
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
                 // Get all selected conversations initially
+                console.log('Checking for selected conversations...');
+                const allCheckboxes = document.querySelectorAll('.conversation-checkbox');
+                console.log('Total checkboxes found:', allCheckboxes.length);
+                
+                // Log each checkbox's state and its associated conversation
+                allCheckboxes.forEach((checkbox, index) => {
+                    const conversationItem = checkbox.closest('a[href^="/c/"]');
+                    console.log(`Checkbox ${index + 1}:`, {
+                        checked: checkbox.checked,
+                        conversationHref: conversationItem?.href,
+                        conversationText: conversationItem?.textContent?.trim()
+                    });
+                });
+                
                 let selectedConversations = Array.from(document.querySelectorAll('.conversation-checkbox:checked'));
                 console.log('Found', selectedConversations.length, 'selected conversations');
+                
+                // Log details of each selected conversation
+                selectedConversations.forEach((checkbox, index) => {
+                    const conversationItem = checkbox.closest('a[href^="/c/"]');
+                    console.log(`Selected conversation ${index + 1}:`, {
+                        href: conversationItem?.href,
+                        text: conversationItem?.textContent?.trim()
+                    });
+                });
                 
                 if (selectedConversations.length === 0) {
                     console.log('No conversations selected');
@@ -242,26 +273,48 @@ function deleteSelectedConversations() {
                 }
 
                 // Process each selected conversation
-                for (let i = 0; i < selectedConversations.length; i++) {
+                for (const checkbox of selectedConversations) {
                     try {
-                        // Re-query the conversations to get fresh references
-                        const currentConversations = document.querySelectorAll('.conversation-checkbox:checked');
-                        if (currentConversations.length === 0) {
-                            console.log('No more conversations to delete');
-                            break;
-                        }
-
-                        const checkbox = currentConversations[0]; // Always take the first one
                         const conversationItem = checkbox.closest('a[href^="/c/"]');
+                        console.log('Processing conversation:', {
+                            href: conversationItem?.href,
+                            text: conversationItem?.textContent?.trim(),
+                            checked: checkbox.checked
+                        });
+                        
                         if (!conversationItem) {
                             console.log('Could not find conversation item for checkbox');
                             continue;
                         }
 
-                        // Find the ellipsis button that's closest to this conversation
-                        const ellipsisButton = conversationItem.closest('div').querySelector('button[data-testid^="history-item-"]');
-                        console.log('Found ellipsis button:', ellipsisButton?.getAttribute('data-testid'));
+                        // Find the ellipsis button using multiple selector strategies
+                        let ellipsisButton = null;
                         
+                        // Strategy 1: Look for button with aria-label
+                        ellipsisButton = conversationItem.querySelector('button[aria-label="Open conversation menu"]');
+                        
+                        // Strategy 2: Look for button with specific class
+                        if (!ellipsisButton) {
+                            ellipsisButton = conversationItem.querySelector('button.__menu-item-trailing-btn');
+                        }
+                        
+                        // Strategy 3: Look for button with data-testid
+                        if (!ellipsisButton) {
+                            ellipsisButton = conversationItem.querySelector('button[data-testid^="history-item-"]');
+                        }
+                        
+                        // Strategy 4: Look for any button within the conversation item
+                        if (!ellipsisButton) {
+                            ellipsisButton = conversationItem.querySelector('button');
+                        }
+
+                        console.log('Found ellipsis button:', {
+                            found: !!ellipsisButton,
+                            ariaLabel: ellipsisButton?.getAttribute('aria-label'),
+                            class: ellipsisButton?.className,
+                            visible: ellipsisButton?.offsetParent !== null
+                        });
+
                         if (ellipsisButton) {
                             console.log('Found ellipsis button, attempting to click');
                             
@@ -315,8 +368,15 @@ function deleteSelectedConversations() {
                             if (menu) {
                                 console.log('Menu appeared successfully');
                                 
-                                // Find the delete button in the menu
-                                const deleteButton = menu.querySelector('[data-testid="delete-chat-menu-item"]');
+                                // Find the delete button in the menu using multiple strategies
+                                let deleteButton = menu.querySelector('[data-testid="delete-chat-menu-item"]');
+                                
+                                if (!deleteButton) {
+                                    // Try finding by text content
+                                    deleteButton = Array.from(menu.querySelectorAll('button')).find(btn => 
+                                        btn.textContent.trim().toLowerCase().includes('delete')
+                                    );
+                                }
                                 
                                 if (deleteButton) {
                                     console.log('Found delete button in menu:', deleteButton.outerHTML);
@@ -362,8 +422,7 @@ function deleteSelectedConversations() {
                                         
                                         // Find the delete button - it's usually the button with "Delete" text
                                         const confirmButton = Array.from(confirmDialog.querySelectorAll('button')).find(btn => 
-                                            btn.textContent.trim() === 'Delete' || 
-                                            btn.textContent.includes('Delete')
+                                            btn.textContent.trim().toLowerCase().includes('delete')
                                         );
                                         
                                         if (confirmButton) {
