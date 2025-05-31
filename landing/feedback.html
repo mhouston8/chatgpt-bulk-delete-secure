@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback - ChatGPT Bulk Delete</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .feedback-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 8rem 2rem 4rem;
+            background: linear-gradient(to bottom, #f8fafc, #ffffff);
+            flex: 1;
+        }
+
+        .feedback-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .feedback-header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+            color: var(--text-color);
+        }
+
+        .feedback-header p {
+            font-size: 1.25rem;
+            color: var(--light-text);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 2.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .form-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .form-card h2 {
+            font-size: 1.75rem;
+            color: var(--text-color);
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+        }
+
+        .form-card p {
+            color: var(--light-text);
+            margin-bottom: 2rem;
+            font-size: 1.05rem;
+            line-height: 1.6;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            color: var(--text-color);
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .submit-button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+
+        .submit-button:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .feedback-header h1 {
+                font-size: 2rem;
+            }
+            
+            .feedback-header p {
+                font-size: 1.1rem;
+            }
+
+            .form-card {
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/" class="logo-container">
+            <img src="images/chatgpt_bulk_delete_secure_icon_48x48.png" alt="Logo" class="logo-icon">
+            <div class="logo">ChatGPT Bulk Delete Secure</div>
+        </a>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="#features">Features</a>
+            <a href="#how-it-works">How It Works</a>
+            <a href="#faq">FAQ</a>
+        </div>
+    </nav>
+
+    <div class="feedback-container">
+        <div class="feedback-header">
+            <h1>Share Your Thoughts</h1>
+            <p>We value your feedback! Help us improve by sharing your experience with the extension.</p>
+        </div>
+
+        <div class="form-card">
+            <h2>Send Feedback</h2>
+            <p>Tell us about your experience with the extension. What worked well? What could be better?</p>
+            <form id="feedbackForm" action="https://formspree.io/f/xnndkweq" method="POST">
+                <div class="form-group">
+                    <label for="feedbackName">Name</label>
+                    <input type="text" id="feedbackName" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="feedbackEmail">Email</label>
+                    <input type="email" id="feedbackEmail" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="feedbackMessage">Your Feedback</label>
+                    <textarea id="feedbackMessage" name="message" required></textarea>
+                </div>
+                <button type="submit" class="submit-button">Send Feedback</button>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="privacy-policy.html">Privacy Policy</a>
+                <a href="contact.html">Contact</a>
+            </div>
+            <p class="copyright">© 2025 ChatGPT Bulk Delete Secure. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/feedback.js"></script>
+</body>
+</html> 
