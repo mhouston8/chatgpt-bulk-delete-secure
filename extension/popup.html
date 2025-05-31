@@ -10,6 +10,10 @@
         <p>Select and delete your ChatGPT conversations</p>
         <button id="addCheckboxesButton" class="action-button">Add Checkboxes</button>
         <button id="deleteButton" class="delete-button" disabled>Delete Selected Chats</button>
+        <div class="export-option">
+            <input type="checkbox" id="exportBeforeDelete" checked>
+            <label for="exportBeforeDelete">Export before deletion</label>
+        </div>
         <div id="status" class="status"></div>
     </div>
     <script src="popup.js"></script>

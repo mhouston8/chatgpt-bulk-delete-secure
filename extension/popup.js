@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const deleteButton = document.getElementById('deleteButton');
     const addCheckboxesButton = document.getElementById('addCheckboxesButton');
     const statusDiv = document.getElementById('status');
+    const exportCheckbox = document.getElementById('exportBeforeDelete');
 
     // Function to check if any checkboxes are checked
     async function checkCheckboxStates() {
@@ -75,8 +76,18 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             deleteButton.disabled = true;
-            statusDiv.textContent = 'Deleting selected conversations...';
+            statusDiv.textContent = 'Processing...';
 
+            // If export is enabled, export first
+            if (exportCheckbox.checked) {
+                statusDiv.textContent = 'Exporting conversations...';
+                await chrome.scripting.executeScript({
+                    target: { tabId: tab.id },
+                    function: exportSelectedConversations
+                });
+            }
+
+            statusDiv.textContent = 'Deleting selected conversations...';
             console.log('Executing delete script');
             await chrome.scripting.executeScript({
                 target: { tabId: tab.id },
@@ -287,11 +298,15 @@ function deleteSelectedConversations() {
                             continue;
                         }
 
+                        // Store the conversation ID for verification after deletion
+                        const conversationId = conversationItem.href.split('/c/')[1];
+                        console.log('Conversation ID:', conversationId);
+
                         // Find the ellipsis button using multiple selector strategies
                         let ellipsisButton = null;
                         
                         // Strategy 1: Look for button with aria-label
-                        ellipsisButton = conversationItem.querySelector('button[aria-label="Open conversation menu"]');
+                        ellipsisButton = conversationItem.querySelector('button[aria-label="Open conversation options"]');
                         
                         // Strategy 2: Look for button with specific class
                         if (!ellipsisButton) {
@@ -421,9 +436,7 @@ function deleteSelectedConversations() {
                                         console.log('Found confirmation dialog');
                                         
                                         // Find the delete button - it's usually the button with "Delete" text
-                                        const confirmButton = Array.from(confirmDialog.querySelectorAll('button')).find(btn => 
-                                            btn.textContent.trim().toLowerCase().includes('delete')
-                                        );
+                                        const confirmButton = confirmDialog.querySelector('[data-testid="delete-conversation-confirm-button"]');
                                         
                                         if (confirmButton) {
                                             console.log('Found confirm button:', confirmButton.outerHTML);
@@ -461,6 +474,29 @@ function deleteSelectedConversations() {
                                             
                                             // Wait for the deletion to complete
                                             await new Promise(resolve => setTimeout(resolve, 1000));
+
+                                            // Verify the conversation was deleted
+                                            const verifyDeletion = async () => {
+                                                const maxAttempts = 5;
+                                                let attempts = 0;
+                                                
+                                                while (attempts < maxAttempts) {
+                                                    const deletedConversation = document.querySelector(`a[href="/c/${conversationId}"]`);
+                                                    if (!deletedConversation) {
+                                                        console.log('Conversation successfully deleted');
+                                                        break;
+                                                    }
+                                                    console.log('Conversation still exists, waiting...');
+                                                    await new Promise(resolve => setTimeout(resolve, 1000));
+                                                    attempts++;
+                                                }
+                                                
+                                                if (attempts === maxAttempts) {
+                                                    console.log('Failed to verify conversation deletion');
+                                                }
+                                            };
+                                            
+                                            await verifyDeletion();
                                         } else {
                                             console.log('Delete button not found in dialog');
                                         }
@@ -495,6 +531,268 @@ function deleteSelectedConversations() {
     });
 }
 
+// Function to export selected conversations
+function exportSelectedConversations() {
+    return new Promise((resolve, reject) => {
+        try {
+            const exportSelected = async () => {
+                const selectedCheckboxes = document.querySelectorAll('.conversation-checkbox:checked');
+                console.log('Exporting', selectedCheckboxes.length, 'conversations');
+
+                for (const checkbox of selectedCheckboxes) {
+                    const conversationItem = checkbox.closest('a[href^="/c/"]');
+                    if (!conversationItem) continue;
+
+                    // Get conversation title for filename
+                    const conversationTitle = conversationItem.textContent.trim().replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                    console.log('Processing conversation:', conversationTitle);
+                    
+                    // Click the conversation to open it
+                    conversationItem.click();
+                    
+                    // Wait for the conversation to load
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+
+                    // Get all messages in the conversation
+                    const messages = [];
+                    
+                    // Wait for messages to be visible
+                    const waitForMessages = () => {
+                        return new Promise((resolve) => {
+                            const checkForMessages = () => {
+                                const messageGroups = document.querySelectorAll('[data-message-author-role]');
+                                console.log('Checking for messages, found groups:', messageGroups.length);
+                                if (messageGroups.length > 0) {
+                                    resolve(messageGroups);
+                                } else {
+                                    console.log('No messages found, retrying in 1 second...');
+                                    setTimeout(checkForMessages, 1000);
+                                }
+                            };
+                            checkForMessages();
+                        });
+                    };
+
+                    const messageGroups = await waitForMessages();
+                    console.log('Found message groups:', messageGroups.length);
+
+                    // Process each message group
+                    for (const group of messageGroups) {
+                        const role = group.getAttribute('data-message-author-role');
+                        console.log('Processing message with role:', role);
+
+                        // Try different selectors for message content
+                        let content = '';
+                        
+                        // Try getting content from markdown-content
+                        const markdownContent = group.querySelector('.markdown-content');
+                        if (markdownContent) {
+                            content = markdownContent.innerHTML;
+                            console.log('Found markdown content:', content.length);
+                        }
+                        
+                        // If no markdown content, try getting from the message div
+                        if (!content) {
+                            const messageDiv = group.querySelector('[data-message-author-role]');
+                            if (messageDiv) {
+                                content = messageDiv.innerHTML;
+                                console.log('Found message div content:', content.length);
+                            }
+                        }
+                        
+                        // If still no content, try getting from the entire group
+                        if (!content) {
+                            content = group.innerHTML;
+                            console.log('Using group content:', content.length);
+                        }
+
+                        if (content) {
+                            console.log('Adding message with content length:', content.length);
+                            messages.push({
+                                role: role,
+                                content: content
+                            });
+                        } else {
+                            console.log('No content found for message');
+                        }
+                    }
+
+                    console.log('Total messages processed:', messages.length);
+
+                    if (messages.length === 0) {
+                        console.log('No messages found in conversation');
+                        continue;
+                    }
+
+                    // Create HTML document with improved styling
+                    const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ChatGPT Conversation - ${conversationTitle}</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            color: #333;
+        }
+        .conversation-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e5e5e5;
+        }
+        .conversation-header h1 {
+            font-size: 24px;
+            color: #202123;
+            margin: 0;
+            padding: 0;
+        }
+        .conversation-header .timestamp {
+            color: #666;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .message {
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .user {
+            background-color: #f7f7f8;
+            border-left: 4px solid #10a37f;
+        }
+        .assistant {
+            background-color: #f0f0f0;
+            border-left: 4px solid #6b7280;
+        }
+        .message-header {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #202123;
+        }
+        .message-content {
+            color: #374151;
+        }
+        .message pre {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .message code {
+            background-color: #f0f0f0;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .message p {
+            margin: 0 0 15px 0;
+        }
+        .message p:last-child {
+            margin-bottom: 0;
+        }
+        .message img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .message ul, .message ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .message li {
+            margin: 5px 0;
+        }
+        .message blockquote {
+            border-left: 4px solid #e5e5e5;
+            margin: 10px 0;
+            padding: 10px 20px;
+            background-color: #f9f9f9;
+            color: #666;
+        }
+        .message table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 15px 0;
+        }
+        .message th, .message td {
+            border: 1px solid #e5e5e5;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        .message th {
+            background-color: #f5f5f5;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="conversation-header">
+        <h1>ChatGPT Conversation</h1>
+        <div class="timestamp">Exported on ${new Date().toLocaleString()}</div>
+    </div>
+    <div class="conversation">
+        ${messages.map(msg => `
+            <div class="message ${msg.role}">
+                <div class="message-header">${msg.role === 'user' ? 'You' : 'ChatGPT'}</div>
+                <div class="message-content">${msg.content}</div>
+            </div>
+        `).join('\n')}
+    </div>
+</body>
+</html>`;
+
+                    console.log('HTML content length:', htmlContent.length);
+
+                    // Create a blob with the HTML content
+                    const blob = new Blob([htmlContent], { type: 'text/html' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    // Use Chrome's downloads API to save the file
+                    const filename = `chatgpt_conversation_${conversationTitle}_${new Date().toISOString().split('T')[0]}.html`;
+                    
+                    // Send message to background script to handle download
+                    chrome.runtime.sendMessage({
+                        action: 'downloadConversation',
+                        url: url,
+                        filename: filename
+                    });
+
+                    // Wait for download to start
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+
+                    // Go back to the conversation list
+                    const backButton = document.querySelector('a[href="/"]');
+                    if (backButton) {
+                        backButton.click();
+                        // Wait for the list to load
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+                }
+                resolve();
+            };
+
+            exportSelected();
+        } catch (error) {
+            console.error('Error exporting conversations:', error);
+            reject(error);
+        }
+    });
+}
+
 // Listen for messages from content script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'updateDeleteButton') {
@@ -503,4 +801,4 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             deleteButton.disabled = !request.enabled;
         }
     }
-}); 
+});

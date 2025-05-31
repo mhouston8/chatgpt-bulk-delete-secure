@@ -1,15 +1,19 @@
 {
   "manifest_version": 3,
   "name": "ChatGPT Bulk Delete Secure",
-  "version": "1.0",
+  "version": "1.1",
   "description": "Securely delete multiple ChatGPT conversations at once. Select what to remove using checkboxes — fast, private, and easy.",
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "downloads"
   ],
   "host_permissions": [
     "https://chatgpt.com/*"
   ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
