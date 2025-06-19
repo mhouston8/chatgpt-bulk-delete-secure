@@ -14,4 +14,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             }
         });
     }
+});
+
+chrome.action.onClicked.addListener(() => {
+  chrome.windows.create({
+    url: 'html/popup.html',
+    type: 'popup',
+    width: 400,
+    height: 600,
+    focused: true
+  });
 }); 

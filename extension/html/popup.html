@@ -1,8 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>ChatGPT Bulk Delete</title>
+    <title>ChatGPT Bulk Delete Secure</title>
     <link rel="stylesheet" href="../css/styles.css">
+    <script src="../lib/supabase-js.js"></script>
+    <script src="../js/supabase-config.js"></script>
+    <script src="../js/stripe-config.js"></script>
+    <script src="../js/popup.js"></script>
 </head>
 <body>
     <div class="container">
@@ -15,7 +19,9 @@
             <label for="exportBeforeDelete">Export before deletion</label>
         </div>
         <div id="status" class="status"></div>
+        <div class="sign-in-section">
+            <button id="signInButton" class="sign-in-button">Sign In</button>
+        </div>
     </div>
-    <script src="../js/popup.js"></script>
 </body>
 </html> 

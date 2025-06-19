@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payment Successful - ChatGPT Bulk Delete</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            background-color: #f7f7f7;
+            color: #333;
+        }
+
+        .success-container {
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .success-icon {
+            color: #4CAF50;
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s;
+            margin: 10px;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+
+        .button.secondary {
+            background-color: #6c757d;
+        }
+
+        .button.secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .features-list {
+            text-align: left;
+            margin: 20px 0;
+            padding: 0;
+            list-style-type: none;
+        }
+
+        .features-list li {
+            margin: 10px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .features-list li:before {
+            content: "✓";
+            color: #4CAF50;
+            position: absolute;
+            left: 0;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 600px) {
+            .success-container {
+                padding: 20px;
+            }
+            
+            .button {
+                width: 100%;
+                margin: 5px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="success-container">
+        <div class="success-icon">✓</div>
+        <h1>Payment Successful!</h1>
+        <p>Thank you for upgrading to Premium. Your subscription is now active.</p>
+        
+        <ul class="features-list">
+            <li>Unlimited chat deletion</li>
+            <li>File Export</li>
+            <li>Priority support</li>
+            <li>Future premium features</li>
+        </ul>
+
+        <p>You can now return to the extension to start using your premium features.</p>
+        
+        <div class="button-container">
+            <a href="https://chatgptbulkdelete.com" class="button secondary">Return to Homepage</a>
+            <button onclick="window.close()" class="button">Close Window</button>
+        </div>
+    </div>
+
+    <script>
+        // Check if we're in the extension
+        if (window.chrome && chrome.runtime) {
+            // Notify the extension that payment was successful
+            chrome.runtime.sendMessage({ type: 'PAYMENT_SUCCESS' });
+        }
+
+        // Add URL parameter handling
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionId = urlParams.get('session_id');
+            
+            if (sessionId) {
+                console.log('Payment session completed:', sessionId);
+                // You could add additional verification here if needed
+            }
+        };
+    </script>
+</body>
+</html> 

@@ -3,53 +3,101 @@ document.addEventListener('DOMContentLoaded', function() {
     const addCheckboxesButton = document.getElementById('addCheckboxesButton');
     const statusDiv = document.getElementById('status');
     const exportCheckbox = document.getElementById('exportBeforeDelete');
+    const signInButton = document.getElementById('signInButton');
+    const upgradeButton = document.getElementById('upgradeButton');
 
     // Function to check if any checkboxes are checked
     async function checkCheckboxStates() {
         try {
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            if (!tab.url.includes('chatgpt.com')) return;
+            console.log('Checking checkbox states');
+            // Get all tabs and find the ChatGPT tab
+            const tabs = await chrome.tabs.query({});
+            console.log('All tabs:', tabs);
+            
+            const chatgptTab = tabs.find(tab => tab.url && tab.url.includes('chatgpt.com'));
+            console.log('Found ChatGPT tab:', chatgptTab);
+            
+            if (!chatgptTab) {
+                console.error('No ChatGPT tab found during checkbox check');
+                deleteButton.disabled = true;
+                return;
+            }
 
+            console.log('Executing script to check checkbox states');
             const result = await chrome.scripting.executeScript({
-                target: { tabId: tab.id },
+                target: { tabId: chatgptTab.id },
                 function: () => {
-                    return document.querySelector('.conversation-checkbox:checked') !== null;
+                    const hasChecked = document.querySelector('.conversation-checkbox:checked') !== null;
+                    console.log('Found checked checkboxes:', hasChecked);
+                    return hasChecked;
                 }
             });
 
             // Enable delete button if any checkboxes are checked
+            console.log('Checkbox check result:', result[0].result);
             deleteButton.disabled = !result[0].result;
+            
+            // Update status message
+            if (result[0].result) {
+                statusDiv.textContent = 'Ready to delete selected conversations';
+                statusDiv.style.color = '#28a745';
+            } else {
+                statusDiv.textContent = 'Select conversations to delete';
+                statusDiv.style.color = 'white';
+            }
         } catch (error) {
             console.error('Error checking checkbox states:', error);
+            deleteButton.disabled = true;
         }
     }
 
     // Check checkbox states when popup opens
     checkCheckboxStates();
 
+    // Set up periodic checking of checkbox states
+    setInterval(checkCheckboxStates, 1000);
+
     addCheckboxesButton.addEventListener('click', async () => {
         try {
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            console.log('Add checkboxes button clicked');
+            // Get all tabs and find the ChatGPT tab
+            const tabs = await chrome.tabs.query({});
+            console.log('All tabs:', tabs);
             
-            if (!tab.url.includes('chatgpt.com')) {
-                statusDiv.textContent = 'Please navigate to chatgpt.com first';
+            const chatgptTab = tabs.find(tab => tab.url && tab.url.includes('chatgpt.com'));
+            console.log('Found ChatGPT tab:', chatgptTab);
+            
+            if (!chatgptTab) {
+                console.error('No ChatGPT tab found');
+                statusDiv.textContent = 'Please open chatgpt.com in a tab';
                 return;
             }
 
+            console.log('Selected tab:', {
+                id: chatgptTab.id,
+                url: chatgptTab.url,
+                title: chatgptTab.title,
+                active: chatgptTab.active
+            });
+
+            console.log('Executing script to add checkboxes');
             await chrome.scripting.executeScript({
-                target: { tabId: tab.id },
+                target: { tabId: chatgptTab.id },
                 function: addCheckboxesToConversations
             });
 
             // Add click listeners to checkboxes
+            console.log('Adding click listeners to checkboxes');
             await chrome.scripting.executeScript({
-                target: { tabId: tab.id },
+                target: { tabId: chatgptTab.id },
                 function: () => {
                     const checkboxes = document.querySelectorAll('.conversation-checkbox');
+                    console.log('Found checkboxes:', checkboxes.length);
                     checkboxes.forEach(checkbox => {
                         checkbox.addEventListener('change', () => {
                             // Store the state in localStorage
                             const anyChecked = document.querySelector('.conversation-checkbox:checked') !== null;
+                            console.log('Checkbox state changed. Any checked:', anyChecked);
                             localStorage.setItem('hasCheckedBoxes', anyChecked);
                         });
                     });
@@ -57,32 +105,584 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             // Check initial state
-            await checkCheckboxStates();
+            console.log('Checking initial checkbox state');
+            await checkCheckboxStates(chatgptTab.id);
             
             statusDiv.textContent = 'Checkboxes added. Select conversations to delete.';
+            statusDiv.style.color = 'white';
         } catch (error) {
+            console.error('Error in addCheckboxesButton click handler:', error);
             statusDiv.textContent = 'Error: ' + error.message;
         }
     });
 
+    // Check if user is signed in
+    async function checkAuthStatus() {
+        try {
+            const { data: { session }, error } = await window.supabaseClient.auth.getSession();
+            if (error) throw error;
+            
+            if (session) {
+                // Set up real-time subscription for premium status changes
+                setupPremiumStatusSubscription();
+                
+                // Check if user has paid
+                const { data: userData, error: userError } = await window.supabaseClient
+                    .from('User')
+                    .select('is_premium_subscriber')
+                    .eq('id', session.user.id)
+                    .single();
+
+                if (userError) throw userError;
+
+                if (userData.is_premium_subscriber) {
+                    // Hide sign in button and show premium status
+                    signInButton.style.display = 'none';
+                    exportCheckbox.disabled = false;
+                    exportCheckbox.checked = true;
+                    
+                    // Remove buy premium button if it exists
+                    const buyPremiumButton = document.getElementById('buyPremiumButton');
+                    if (buyPremiumButton) {
+                        buyPremiumButton.remove();
+                    }
+                    
+                    // Remove any email verification messages
+                    const signInSection = document.querySelector('.sign-in-section');
+                    if (signInSection) {
+                        const verificationDivs = signInSection.querySelectorAll('div[style*="background: #f8f9fa"]');
+                        verificationDivs.forEach(div => div.remove());
+                    }
+                    
+                    // Create premium status indicator if it doesn't exist
+                    let premiumStatus = document.getElementById('premiumStatus');
+                    if (!premiumStatus) {
+                        premiumStatus = document.createElement('div');
+                        premiumStatus.id = 'premiumStatus';
+                        premiumStatus.style.cssText = `
+                            background-color: #28a745;
+                            color: white;
+                            padding: 8px 16px;
+                            border-radius: 4px;
+                            margin: 10px 0;
+                            font-weight: 500;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 8px;
+                        `;
+                        const signInSection = document.querySelector('.sign-in-section');
+                        signInSection.insertBefore(premiumStatus, signInSection.firstChild);
+                    }
+                    
+                    // Add premium icon and text
+                    premiumStatus.innerHTML = `
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                        </svg>
+                        Premium User - All Features Enabled
+                    `;
+                    
+                    statusDiv.textContent = 'You have access to all premium features';
+                    statusDiv.style.color = '#28a745';
+                } else {
+                    // Hide sign in button and show buy premium button
+                    signInButton.style.display = 'none';
+                    exportCheckbox.disabled = true;
+                    exportCheckbox.checked = false;
+                    statusDiv.textContent = 'Upgrade to premium to enable export functionality';
+                    statusDiv.style.color = '#666';
+                    
+                    // Remove any email verification messages
+                    const signInSection = document.querySelector('.sign-in-section');
+                    if (signInSection) {
+                        const verificationDivs = signInSection.querySelectorAll('div[style*="background: #f8f9fa"]');
+                        verificationDivs.forEach(div => div.remove());
+                    }
+                    
+                    // Create or get button container
+                    let buttonContainer = document.querySelector('.button-container');
+                    if (!buttonContainer) {
+                        buttonContainer = document.createElement('div');
+                        buttonContainer.className = 'button-container';
+                        const signInSection = document.querySelector('.sign-in-section');
+                        signInSection.appendChild(buttonContainer);
+                    }
+                    
+                    // Add Buy Premium button if it doesn't exist
+                    if (!document.getElementById('buyPremiumButton')) {
+                        const buyPremiumButton = document.createElement('button');
+                        buyPremiumButton.id = 'buyPremiumButton';
+                        buyPremiumButton.textContent = 'Buy Premium';
+                        buttonContainer.appendChild(buyPremiumButton);
+                        
+                        buyPremiumButton.addEventListener('click', async () => {
+                            try {
+                                await window.stripeFunctions.createCheckoutSession();
+                            } catch (error) {
+                                console.error('Error creating checkout session:', error);
+                                statusDiv.textContent = 'Error: ' + error.message;
+                            }
+                        });
+                    }
+                }
+
+                // Add sign out button if it doesn't exist
+                if (!document.getElementById('signOutButton')) {
+                    const signOutButton = document.createElement('button');
+                    signOutButton.id = 'signOutButton';
+                    signOutButton.textContent = 'Sign Out';
+                    
+                    // Get or create button container
+                    let buttonContainer = document.querySelector('.button-container');
+                    if (!buttonContainer) {
+                        buttonContainer = document.createElement('div');
+                        buttonContainer.className = 'button-container';
+                        const signInSection = document.querySelector('.sign-in-section');
+                        signInSection.appendChild(buttonContainer);
+                    }
+                    
+                    buttonContainer.appendChild(signOutButton);
+                    
+                    signOutButton.addEventListener('click', async () => {
+                        try {
+                            const { error } = await window.supabaseClient.auth.signOut();
+                            if (error) throw error;
+                            
+                            // Remove button container
+                            const buttonContainer = document.querySelector('.button-container');
+                            if (buttonContainer) {
+                                buttonContainer.remove();
+                            }
+                            
+                            // Remove premium status indicator
+                            const premiumStatus = document.getElementById('premiumStatus');
+                            if (premiumStatus) {
+                                premiumStatus.remove();
+                            }
+                            
+                            // Reset sign in button
+                            signInButton.style.display = 'block';
+                            signInButton.textContent = 'Sign In';
+                            signInButton.style.backgroundColor = '#007bff';
+                            signInButton.disabled = false;
+                            
+                            // Reset export checkbox
+                            exportCheckbox.disabled = true;
+                            exportCheckbox.checked = false;
+                            
+                            // Show success message
+                            statusDiv.textContent = 'Signed out successfully';
+                            
+                            // Clear status message after 3 seconds
+                            setTimeout(() => {
+                                statusDiv.textContent = '';
+                            }, 3000);
+                        } catch (error) {
+                            console.error('Error signing out:', error);
+                            statusDiv.textContent = 'Error signing out: ' + error.message;
+                        }
+                    });
+                }
+                
+                return true;
+            } else {
+                // Clean up subscription when user is not authenticated
+                cleanupPremiumStatusSubscription();
+                
+                // Show sign in button and hide any other buttons
+                signInButton.style.display = 'block';
+                signInButton.textContent = 'Sign In';
+                signInButton.style.backgroundColor = '#007bff';
+                signInButton.disabled = false;
+                exportCheckbox.disabled = true;
+                exportCheckbox.checked = false;
+                statusDiv.textContent = '';
+                
+                // Remove buy premium button if it exists
+                const buyPremiumButton = document.getElementById('buyPremiumButton');
+                if (buyPremiumButton) {
+                    buyPremiumButton.remove();
+                }
+                
+                // Remove sign out button if it exists
+                const signOutButton = document.getElementById('signOutButton');
+                if (signOutButton) {
+                    signOutButton.remove();
+                }
+                
+                // Remove premium status indicator if it exists
+                const premiumStatus = document.getElementById('premiumStatus');
+                if (premiumStatus) {
+                    premiumStatus.remove();
+                }
+                
+                return false;
+            }
+        } catch (error) {
+            console.error('Auth check error:', error);
+            return false;
+        }
+    }
+
+    // Handle sign in
+    signInButton.addEventListener('click', async () => {
+        try {
+            // Create a simple modal for email/password
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            `;
+
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `
+                background: #2d2d2d;
+                padding: 20px;
+                border-radius: 8px;
+                width: 80%;
+                max-width: 300px;
+            `;
+
+            const emailInput = document.createElement('input');
+            emailInput.type = 'email';
+            emailInput.placeholder = 'Email';
+            emailInput.style.cssText = `
+                width: 100%;
+                padding: 8px;
+                margin-bottom: 10px;
+                border: 1px solid #404040;
+                border-radius: 4px;
+                background: #1a1a1a;
+                color: white;
+            `;
+
+            const passwordInput = document.createElement('input');
+            passwordInput.type = 'password';
+            passwordInput.placeholder = 'Password';
+            passwordInput.style.cssText = emailInput.style.cssText;
+
+            const submitButton = document.createElement('button');
+            submitButton.textContent = 'Sign In';
+            submitButton.style.cssText = `
+                width: 100%;
+                padding: 8px;
+                background: #007bff;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                margin-top: 10px;
+            `;
+
+            const closeButton = document.createElement('button');
+            closeButton.textContent = 'Close';
+            closeButton.style.cssText = `
+                width: 100%;
+                padding: 8px;
+                background: #404040;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                margin-top: 10px;
+            `;
+
+            const signUpText = document.createElement('div');
+            signUpText.style.cssText = `
+                text-align: center;
+                margin-top: 15px;
+                color: #ffffff;
+                font-size: 14px;
+            `;
+            signUpText.innerHTML = 'Don\'t have an account? <a href="#" style="color: #007bff; text-decoration: none;">Sign Up</a>';
+
+            const errorMessage = document.createElement('div');
+            errorMessage.style.cssText = `
+                text-align: center;
+                margin-top: 10px;
+                color: #dc3545;
+                font-size: 14px;
+                display: none;
+            `;
+
+            let isSignUp = false;
+
+            // Handle sign up/sign in link clicks
+            signUpText.addEventListener('click', (e) => {
+                if (e.target.tagName === 'A') {
+                    e.preventDefault();
+                    isSignUp = !isSignUp;
+                    submitButton.textContent = isSignUp ? 'Sign Up' : 'Sign In';
+                    signUpText.innerHTML = isSignUp ? 
+                        'Already have an account? <a href="#" style="color: #007bff; text-decoration: none;">Sign In</a>' :
+                        'Don\'t have an account? <a href="#" style="color: #007bff; text-decoration: none;">Sign Up</a>';
+                    errorMessage.style.display = 'none';
+                }
+            });
+
+            modalContent.appendChild(emailInput);
+            modalContent.appendChild(passwordInput);
+            modalContent.appendChild(submitButton);
+            modalContent.appendChild(closeButton);
+            modalContent.appendChild(signUpText);
+            modalContent.appendChild(errorMessage);
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+
+            // Handle sign in/sign up
+            submitButton.addEventListener('click', async () => {
+                try {
+                    errorMessage.style.display = 'none';
+                    
+                    if (isSignUp) {
+                        // Validate email and password
+                        if (!emailInput.value || !passwordInput.value) {
+                            errorMessage.textContent = 'Please enter both email and password';
+                            errorMessage.style.display = 'block';
+                            return;
+                        }
+
+                        if (passwordInput.value.length < 6) {
+                            errorMessage.textContent = 'Password must be at least 6 characters';
+                            errorMessage.style.display = 'block';
+                            return;
+                        }
+
+                        submitButton.disabled = true;
+                        submitButton.textContent = 'Creating Account...';
+
+                        const { data, error } = await window.supabaseClient.auth.signUp({
+                            email: emailInput.value,
+                            password: passwordInput.value,
+                            options: {
+                                emailRedirectTo: chrome.runtime.getURL('html/popup.html')
+                            }
+                        });
+
+                        if (error) throw error;
+
+                        if (data?.user?.identities?.length === 0) {
+                            errorMessage.textContent = 'This email is already registered. Please sign in instead.';
+                            errorMessage.style.display = 'block';
+                            isSignUp = false;
+                            submitButton.textContent = 'Sign In';
+                            signUpText.innerHTML = 'Don\'t have an account? <a href="#" style="color: #007bff; text-decoration: none;">Sign Up</a>';
+                        } else {
+                            // Save user data to the database
+                            const { error: dbError } = await window.supabaseClient
+                                .from('User')
+                                .insert([
+                                    {
+                                        id: data.user.id,
+                                        email: data.user.email,
+                                        is_premium_subscriber: false,
+                                        created_at: new Date().toISOString()
+                                    }
+                                ]);
+
+                            if (dbError) {
+                                console.error('Error saving user data:', dbError);
+                                errorMessage.textContent = 'Account created but there was an error saving your data. Please try signing in.';
+                                errorMessage.style.display = 'block';
+                            } else {
+                                // Close the modal
+                                modal.remove();
+                                
+                                // Update the sign-in section to show email verification message
+                                const signInSection = document.querySelector('.sign-in-section');
+                                signInSection.innerHTML = `
+                                    <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px; margin: 10px 0;">
+                                        <p style="color: #2c3e50; margin-bottom: 10px; font-weight: 500;">
+                                            Please verify your email address
+                                        </p>
+                                        <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
+                                            We've sent a verification email to <strong>${data.user.email}</strong>
+                                        </p>
+                                        <p style="color: #666; font-size: 13px;">
+                                            Click the link in the email to complete your registration and start using the extension.
+                                        </p>
+                                    </div>
+                                `;
+                                
+                                // Keep the original sign-in button visible but update its reference
+                                signInButton.style.display = 'block';
+                                signInButton.textContent = 'Sign In';
+                                signInButton.style.backgroundColor = '#007bff';
+                                signInButton.disabled = false;
+                                
+                                // Re-append the original sign-in button to the section
+                                signInSection.appendChild(signInButton);
+                            }
+                        }
+                    } else {
+                        submitButton.disabled = true;
+                        submitButton.textContent = 'Signing In...';
+
+                        const { data, error } = await window.supabaseClient.auth.signInWithPassword({
+                            email: emailInput.value,
+                            password: passwordInput.value
+                        });
+
+                        if (error) throw error;
+
+                        modal.remove();
+                        await checkAuthStatus();
+                        
+                        // Clear any email verification messages after successful sign-in
+                        const signInSection = document.querySelector('.sign-in-section');
+                        if (signInSection) {
+                            // Remove any email verification divs
+                            const verificationDivs = signInSection.querySelectorAll('div[style*="background: #f8f9fa"]');
+                            verificationDivs.forEach(div => div.remove());
+                        }
+                    }
+                } catch (error) {
+                    console.error('Auth error:', error);
+                    errorMessage.textContent = error.message;
+                    errorMessage.style.display = 'block';
+                } finally {
+                    submitButton.disabled = false;
+                    submitButton.textContent = isSignUp ? 'Sign Up' : 'Sign In';
+                    errorMessage.style.color = '#dc3545'; // Reset error message color
+                }
+            });
+
+            // Handle close
+            closeButton.addEventListener('click', () => {
+                modal.remove();
+            });
+        } catch (error) {
+            console.error('Error showing sign in modal:', error);
+            statusDiv.textContent = 'Error: ' + error.message;
+        }
+    });
+
+    // Check auth status when popup opens
+    checkAuthStatus();
+
+    // Set up real-time subscription for premium status changes
+    let premiumStatusSubscription = null;
+
+    async function setupPremiumStatusSubscription() {
+        try {
+            // Clean up any existing subscription first
+            cleanupPremiumStatusSubscription();
+            
+            const { data: { session }, error } = await window.supabaseClient.auth.getSession();
+            if (error) throw error;
+            
+            if (session) {
+                console.log('Setting up real-time subscription for user:', session.user.id);
+                
+                // Subscribe to changes in the User table for the current user
+                premiumStatusSubscription = window.supabaseClient
+                    .channel('premium-status-changes')
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: 'UPDATE',
+                            schema: 'public',
+                            table: 'User',
+                            filter: `id=eq.${session.user.id}`
+                        },
+                        (payload) => {
+                            console.log('Premium status change detected:', payload);
+                            
+                            // Check if is_premium_subscriber changed
+                            if (payload.new.is_premium_subscriber !== payload.old.is_premium_subscriber) {
+                                console.log('Premium status updated:', {
+                                    old: payload.old.is_premium_subscriber,
+                                    new: payload.new.is_premium_subscriber
+                                });
+                                
+                                // Update the UI immediately
+                                checkAuthStatus().then(() => {
+                                    const statusDiv = document.getElementById('status');
+                                    if (statusDiv) {
+                                        if (payload.new.is_premium_subscriber) {
+                                            statusDiv.textContent = 'Premium features activated!';
+                                            statusDiv.style.color = '#28a745';
+                                        } else {
+                                            statusDiv.textContent = 'Premium status removed';
+                                            statusDiv.style.color = '#dc3545';
+                                        }
+                                        
+                                        // Clear status message after 3 seconds
+                                        setTimeout(() => {
+                                            statusDiv.textContent = '';
+                                        }, 3000);
+                                    }
+                                }).catch(error => {
+                                    console.error('Error updating UI after premium status change:', error);
+                                });
+                            }
+                        }
+                    )
+                    .subscribe((status) => {
+                        console.log('Real-time subscription status:', status);
+                    });
+            }
+        } catch (error) {
+            console.error('Error setting up premium status subscription:', error);
+        }
+    }
+
+    // Clean up subscription when popup closes
+    function cleanupPremiumStatusSubscription() {
+        if (premiumStatusSubscription) {
+            console.log('Cleaning up premium status subscription');
+            try {
+                window.supabaseClient.removeChannel(premiumStatusSubscription);
+            } catch (error) {
+                console.log('Error removing channel (may already be removed):', error);
+            }
+            premiumStatusSubscription = null;
+        }
+    }
+
+    // Clean up when the popup is about to unload
+    window.addEventListener('beforeunload', cleanupPremiumStatusSubscription);
+
+    // Also clean up when the extension context is invalidated
+    chrome.runtime.onSuspend.addListener(cleanupPremiumStatusSubscription);
+
+    // Modify delete button click handler to check for export permission
     deleteButton.addEventListener('click', async () => {
         console.log('Delete button clicked');
         try {
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            // Get all tabs and find the ChatGPT tab
+            const tabs = await chrome.tabs.query({});
+            const chatgptTab = tabs.find(tab => tab.url && tab.url.includes('chatgpt.com'));
             
-            if (!tab.url.includes('chatgpt.com')) {
-                statusDiv.textContent = 'Please navigate to chatgpt.com first';
+            if (!chatgptTab) {
+                statusDiv.textContent = 'Please open chatgpt.com in a tab';
                 return;
             }
 
             deleteButton.disabled = true;
             statusDiv.textContent = 'Processing...';
 
-            // If export is enabled, export first
+            // If export is enabled, check if user is signed in
             if (exportCheckbox.checked) {
+                const isSignedIn = await checkAuthStatus();
+                if (!isSignedIn) {
+                    statusDiv.textContent = 'Please sign in to use the export feature';
+                    deleteButton.disabled = false;
+                    return;
+                }
+                
                 statusDiv.textContent = 'Exporting conversations...';
                 await chrome.scripting.executeScript({
-                    target: { tabId: tab.id },
+                    target: { tabId: chatgptTab.id },
                     function: exportSelectedConversations
                 });
             }
@@ -90,7 +690,7 @@ document.addEventListener('DOMContentLoaded', function() {
             statusDiv.textContent = 'Deleting selected conversations...';
             console.log('Executing delete script');
             await chrome.scripting.executeScript({
-                target: { tabId: tab.id },
+                target: { tabId: chatgptTab.id },
                 function: deleteSelectedConversations
             });
 
@@ -802,3 +1402,104 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         }
     }
 });
+
+// Listen for payment success message
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === 'PAYMENT_SUCCESS') {
+        console.log('Payment success message received, updating UI...');
+        // First check auth status to get fresh user data
+        checkAuthStatus().then(() => {
+            // Then update UI for premium user
+            updateUIForPremiumUser();
+            // Show success message
+            const statusDiv = document.getElementById('status');
+            if (statusDiv) {
+                statusDiv.textContent = 'Premium features activated successfully!';
+                statusDiv.style.color = '#28a745';
+                // Clear status message after 3 seconds
+                setTimeout(() => {
+                    statusDiv.textContent = '';
+                }, 3000);
+            }
+        }).catch(error => {
+            console.error('Error updating UI after payment:', error);
+            const statusDiv = document.getElementById('status');
+            if (statusDiv) {
+                statusDiv.textContent = 'Error updating premium status. Please try refreshing the extension.';
+                statusDiv.style.color = '#dc3545';
+            }
+        });
+    }
+});
+
+// Function to update UI for premium users
+async function updateUIForPremiumUser() {
+    try {
+        console.log('Updating UI for premium user...');
+        const { data: { session }, error } = await window.supabaseClient.auth.getSession();
+        if (error) throw error;
+
+        if (session) {
+            console.log('User session found, updating premium status...');
+            // Update user's payment status in the database
+            const { error: updateError } = await window.supabaseClient
+                .from('User')
+                .update({ is_premium_subscriber: true })
+                .eq('id', session.user.id);
+
+            if (updateError) throw updateError;
+
+            // Remove any existing buttons and status indicators
+            const signInButton = document.getElementById('signInButton');
+            const buyPremiumButton = document.getElementById('buyPremiumButton');
+            const premiumStatus = document.getElementById('premiumStatus');
+            const signOutButton = document.getElementById('signOutButton');
+            
+            if (signInButton) signInButton.style.display = 'none';
+            if (buyPremiumButton) buyPremiumButton.remove();
+            
+            // Add premium status message
+            const signInSection = document.querySelector('.sign-in-section');
+            if (signInSection) {
+                const newPremiumStatus = document.createElement('div');
+                newPremiumStatus.id = 'premiumStatus';
+                newPremiumStatus.style.cssText = `
+                    background-color: #28a745;
+                    color: white;
+                    padding: 8px 16px;
+                    border-radius: 4px;
+                    margin: 10px 0;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                `;
+                newPremiumStatus.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                    </svg>
+                    Premium User - All Features Enabled
+                `;
+                signInSection.insertBefore(newPremiumStatus, signInSection.firstChild);
+            }
+
+            // Enable export checkbox
+            const exportCheckbox = document.getElementById('exportBeforeDelete');
+            if (exportCheckbox) {
+                exportCheckbox.disabled = false;
+                exportCheckbox.checked = true;
+            }
+
+            // Keep sign out button
+            if (signOutButton) {
+                signOutButton.style.display = 'block';
+            }
+
+            console.log('UI updated successfully for premium user');
+        }
+    } catch (error) {
+        console.error('Error updating premium status:', error);
+        throw error; // Re-throw to be caught by the caller
+    }
+}

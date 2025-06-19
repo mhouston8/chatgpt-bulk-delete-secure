@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payment Successful - ChatGPT Bulk Delete</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            background-color: #f7f7f7;
+            color: #333;
+        }
+
+        .success-container {
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .success-icon {
+            color: #4CAF50;
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+
+        .features-list {
+            text-align: left;
+            margin: 20px 0;
+            padding: 0;
+            list-style-type: none;
+        }
+
+        .features-list li {
+            margin: 10px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .features-list li:before {
+            content: "✓";
+            color: #4CAF50;
+            position: absolute;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="success-container">
+        <div class="success-icon">✓</div>
+        <h1>Payment Successful!</h1>
+        <p>Thank you for upgrading to Premium. Your subscription is now active.</p>
+        
+        <ul class="features-list">
+            <li>Unlimited chat deletion</li>
+            <li>Advanced filtering options</li>
+            <li>Priority support</li>
+            <li>Future premium features</li>
+        </ul>
+
+        <p>You can now close this window and return to the extension to start using your premium features.</p>
+        
+        <a href="#" class="button" id="closeButton">Close Window</a>
+    </div>
+
+    <script>
+        document.getElementById('closeButton').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.close();
+        });
+
+        // Notify the extension that payment was successful
+        if (chrome.runtime) {
+            chrome.runtime.sendMessage({ type: 'PAYMENT_SUCCESS' });
+        }
+    </script>
+</body>
+</html> 

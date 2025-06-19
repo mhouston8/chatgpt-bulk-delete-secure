@@ -1,14 +1,18 @@
 body {
-    width: 300px;
+    width: 100%;
+    min-width: 300px;
     padding: 15px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     margin: 0;
     background-color: #2d2d2d;
     color: #ffffff;
+    box-sizing: border-box;
 }
 
 .container {
     text-align: center;
+    max-width: 400px;
+    margin: 0 auto;
 }
 
 h1 {
@@ -132,4 +136,83 @@ p {
     border-radius: 3px;
     font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
     font-size: 14px;
+}
+
+.sign-in-section {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #e5e5e5;
+    text-align: center;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.button-container {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    width: 100%;
+}
+
+.sign-in-button, #buyPremiumButton, #signOutButton {
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+    width: 150px;
+}
+
+.sign-in-button {
+    background-color: #007bff;
+}
+
+.sign-in-button:hover {
+    background-color: #0056b3;
+}
+
+#buyPremiumButton {
+    background-color: #28a745;
+}
+
+#buyPremiumButton:hover {
+    background-color: #218838;
+}
+
+#signOutButton {
+    background-color: #dc3545;
+}
+
+#signOutButton:hover {
+    background-color: #c82333;
+}
+
+.sign-in-button:disabled, #buyPremiumButton:disabled, #signOutButton:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.upgrade-button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.upgrade-button:hover {
+    background-color: #218838;
+}
+
+.upgrade-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
 } 

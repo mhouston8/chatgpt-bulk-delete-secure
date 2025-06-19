@@ -1,34 +1,48 @@
 {
   "manifest_version": 3,
   "name": "ChatGPT Bulk Delete Secure",
-  "version": "1.1",
-  "description": "Securely delete multiple ChatGPT conversations at once. Select what to remove using checkboxes — fast, private, and easy.",
+  "version": "1.0",
+  "description": "Bulk delete ChatGPT conversations with export functionality",
   "permissions": [
     "activeTab",
     "scripting",
-    "downloads"
+    "storage",
+    "downloads",
+    "tabs"
   ],
   "host_permissions": [
     "https://chatgpt.com/*"
   ],
-  "background": {
-    "service_worker": "js/background.js"
-  },
   "action": {
-    "default_popup": "html/popup.html",
     "default_icon": {
+      "16": "images/chatgpt_bulk_delete_secure_icon_16x16.png",
       "48": "images/chatgpt_bulk_delete_secure_icon_48x48.png",
       "128": "images/chatgpt_bulk_delete_secure_icon_128x128.png"
     }
   },
+  "background": {
+    "service_worker": "js/background.js"
+  },
   "icons": {
+    "16": "images/chatgpt_bulk_delete_secure_icon_16x16.png",
     "48": "images/chatgpt_bulk_delete_secure_icon_48x48.png",
     "128": "images/chatgpt_bulk_delete_secure_icon_128x128.png"
   },
   "content_scripts": [
     {
       "matches": ["https://chatgpt.com/*"],
-      "js": ["js/content.js"]
+      "js": [
+        "lib/supabase-js.js",
+        "js/supabase-config.js",
+        "js/content.js"
+      ],
+      "run_at": "document_end"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["js/stripe-config.js"],
+      "matches": ["https://chatgpt.com/*"]
     }
   ]
 } 

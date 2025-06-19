@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payment Failed - ChatGPT Bulk Delete</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            background-color: #f7f7f7;
+            color: #333;
+        }
+
+        .failed-container {
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .failed-icon {
+            color: #dc3545;
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .button {
+            background-color: #dc3545;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s;
+            margin: 10px;
+        }
+
+        .button:hover {
+            background-color: #c82333;
+        }
+
+        .button.secondary {
+            background-color: #6c757d;
+        }
+
+        .button.secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .error-details {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 600px) {
+            .failed-container {
+                padding: 20px;
+            }
+            
+            .button {
+                width: 100%;
+                margin: 5px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="failed-container">
+        <div class="failed-icon">✕</div>
+        <h1>Payment Failed</h1>
+        <p>We were unable to process your payment. This could be due to:</p>
+        
+        <div class="error-details">
+            <ul style="margin: 0; padding-left: 20px;">
+                <li>Insufficient funds</li>
+                <li>Card declined</li>
+                <li>Incorrect card information</li>
+                <li>Bank declined the transaction</li>
+            </ul>
+        </div>
+
+        <p>Please try again or contact your bank if the problem persists.</p>
+        
+        <div class="button-container">
+            <a href="https://chatgptbulkdelete.com" class="button secondary">Return to Homepage</a>
+            <button onclick="window.close()" class="button">Close Window</button>
+        </div>
+    </div>
+
+    <script>
+        // Check if we're in the extension
+        if (window.chrome && chrome.runtime) {
+            // Notify the extension that payment failed
+            chrome.runtime.sendMessage({ type: 'PAYMENT_FAILED' });
+        }
+
+        // Add URL parameter handling
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const error = urlParams.get('error');
+            const sessionId = urlParams.get('session_id');
+            
+            if (error) {
+                console.log('Payment failed with error:', error);
+                // You could display the specific error message if needed
+            }
+            
+            if (sessionId) {
+                console.log('Failed payment session:', sessionId);
+                // You could add additional verification here if needed
+            }
+        };
+    </script>
+</body>
+</html> 
