@@ -5,8 +5,8 @@ const config = {
         stripeKey: 'pk_test_51RVYo9HKgjgsC02PI2NgCXH975SHBiM4juEvG9hRg0UpKZTCvJ5mwAbRjq0yWm1wuzlP2BixGintBQcJeAmtgwhL006kZKh38K'
     },
     production: {
-        apiUrl: 'https://chatgptbulkdelete.com/api',
-        stripeKey: 'pk_test_51RVYo9HKgjgsC02PI2NgCXH975SHBiM4juEvG9hRg0UpKZTCvJ5mwAbRjq0yWm1wuzlP2BixGintBQcJeAmtgwhL006kZKh38K'
+        apiUrl: 'https://chat-gpt-bulk-delete-server.onrender.com/api',
+        stripeKey: 'pk_live_A9OzrWKPC81KhAVDlaCsauqe'
     }
 };
 
