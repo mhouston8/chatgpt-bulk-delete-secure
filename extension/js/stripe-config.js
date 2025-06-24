@@ -10,15 +10,17 @@ const config = {
     }
 };
 
-// Determine which environment we're in based on the extension's URL
-const isDevelopment = chrome.runtime.getURL('').includes('localhost') || 
-                     chrome.runtime.getURL('').includes('127.0.0.1') ||
-                     chrome.runtime.getURL('').startsWith('chrome-extension://') 
-                     // && 
-                     //chrome.runtime.getURL('').includes('localhost');
+// Production extension ID from Chrome Web Store
+const PRODUCTION_EXTENSION_ID = 'fhelcklfafglkfmpkjggdaimcfogpcdi';
 
-console.log('Extension URL:', chrome.runtime.getURL(''));
+// Determine which environment we're in based on the extension ID
+const extensionId = chrome.runtime.id;
+const isDevelopment = extensionId !== PRODUCTION_EXTENSION_ID;
+
+console.log('Extension ID:', extensionId);
+console.log('Production Extension ID:', PRODUCTION_EXTENSION_ID);
 console.log('Is Development:', isDevelopment);
+console.log('Extension URL:', chrome.runtime.getURL(''));
 
 const currentConfig = isDevelopment ? config.development : config.production;
 
@@ -28,7 +30,8 @@ async function createCheckoutSession() {
         console.log('Starting checkout session creation:', {
             config: currentConfig,
             apiUrl: currentConfig.apiUrl,
-            extensionUrl: chrome.runtime.getURL('')
+            extensionId: extensionId,
+            isDevelopment: isDevelopment
         });
         
         // Get the current user's session
@@ -146,5 +149,15 @@ async function handleSuccessfulPayment() {
 window.stripeFunctions = {
     createCheckoutSession,
     handleSuccessfulPayment,
-    config: currentConfig
+    config: currentConfig,
+    // Add debugging function
+    debugEnvironment: () => {
+        return {
+            extensionId: extensionId,
+            productionExtensionId: PRODUCTION_EXTENSION_ID,
+            isDevelopment: isDevelopment,
+            currentConfig: currentConfig,
+            extensionUrl: chrome.runtime.getURL('')
+        };
+    }
 }; 
