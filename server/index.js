@@ -49,7 +49,8 @@ const app = express();
 // Enable CORS for the extension
 app.use(cors({
     origin: [
-        'chrome-extension://okcgpbcckagppdnehchokdankmcbidig',
+        'chrome-extension://fhelcklfafglkfmpkjggdaimcfogpcdi', // Production extension ID
+        'chrome-extension://okcgpbcckagppdnehchokdankmcbidig', // Development extension ID (keep for testing)
         'http://localhost:3000',
         'https://chatgptbulkdelete.com'
     ],
