@@ -2,11 +2,13 @@
 const config = {
     development: {
         apiUrl: 'http://localhost:3000/api',
-        stripeKey: 'pk_test_51RVYo9HKgjgsC02PI2NgCXH975SHBiM4juEvG9hRg0UpKZTCvJ5mwAbRjq0yWm1wuzlP2BixGintBQcJeAmtgwhL006kZKh38K'
+        stripeKey: 'pk_test_51RVYo9HKgjgsC02PI2NgCXH975SHBiM4juEvG9hRg0UpKZTCvJ5mwAbRjq0yWm1wuzlP2BixGintBQcJeAmtgwhL006kZKh38K',
+        priceId: 'price_1RXbFaHKgjgsC02Piu4E34Ma' // Test price ID
     },
     production: {
         apiUrl: 'https://chat-gpt-bulk-delete-server.onrender.com/api',
-        stripeKey: 'pk_live_A9OzrWKPC81KhAVDlaCsauqe'
+        stripeKey: 'pk_live_A9OzrWKPC81KhAVDlaCsauqe',
+        priceId: 'price_1RVOcOH8mwTAZV25OVdAE7Mw' // Live price ID
     }
 };
 
@@ -40,7 +42,7 @@ async function createCheckoutSession() {
         if (!authSession) throw new Error('No active session found');
 
         const requestBody = {
-            priceId: 'price_1RXbFaHKgjgsC02Piu4E34Ma',
+            priceId: currentConfig.priceId,
             successUrl: isDevelopment ? 'http://localhost:3000/success' : 'https://chatgptbulkdelete.com/success.html',
             cancelUrl: isDevelopment ? 'http://localhost:3000/payment-failed' : 'https://chatgptbulkdelete.com/payment-failed.html',
             userId: authSession.user.id
